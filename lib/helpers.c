@@ -1,6 +1,7 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
+#include <string.h>
 #include "helpers.h"
 
 ssize_t read_(int fd, void* buf, size_t count) {
@@ -15,6 +16,37 @@ ssize_t read_(int fd, void* buf, size_t count) {
             return -1;
         }
         
+        if(result == 0) {
+            return result_read;
+        }
+
+        result_read += result;
+        buf += result;
+        count -= result;
+    }
+}
+
+ssize_t read_until(int fd, void* buf, size_t count, char delimeter) {
+    int result = 0;
+    int result_read = 0;
+    while(1) {
+        result = read(fd, buf, count);
+
+        int i;
+        for(i = 0; i < result; i++) {
+            if(((char*) buf)[i] == delimeter) {
+                return result + result_read;
+            }
+        }
+
+        if(result == count) {
+            return result + result_read;
+        }
+
+        if(result == -1) {
+           return -1;
+        }
+
         if(result == 0) {
             return result_read;
         }

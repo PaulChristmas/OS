@@ -1,15 +1,11 @@
 # Created by PaulChristmas
-# 11.03.15
+# 15.03.15
 
-# Homework directories
-DIRECTORIES=lib cat
+DIRECTORIES=cat revwords
 
-all:
-	for current in $(DIRECTORIES); do \
-		$(MAKE) -C $$current; \
-	done
+all: 
+	@$(foreach ex, $(DIRECTORIES), $(MAKE) -C $(ex);)
 
 clean:
-	for current in $(DIRECTORIES); do \
-		$(MAKE) -C $$current clean; \
-	done	
+	@$(foreach ex, $(DIRECTORIES), $(MAKE) -C $(ex) clean;)
+
