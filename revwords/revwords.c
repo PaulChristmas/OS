@@ -7,7 +7,7 @@
 #define BUF_SIZE 4096
 
 void back_to_front(int length, char* buf) {
-	int back, front = length-1;
+	int back, front = length - 1;
 	char temp;
 	for (back = 0; back < front; back++, front--){
 		temp = buf[back];
@@ -20,6 +20,7 @@ int main(int argc, char* argv[]) {
     ssize_t result_read = 0, result_write = 0;
     int i = 0, j = 0;
     char buf[BUF_SIZE];
+    int flag = 0;
 
     while(1) {
         ssize_t shift = result_read;
@@ -59,12 +60,15 @@ int main(int argc, char* argv[]) {
         	return 1;                               
    	        }
                 shift = i;
+		flag = 1;
             }
         }
 
-        result_read -= (shift + 1) * sizeof(char);
-        if(result_read > 0) {
-            memmove(buf, buf + (shift + 1) * sizeof(char), result_read);
-        }
+	if (flag == 1){
+		result_read -= (shift + 1) * sizeof(char);
+        	if(result_read > 0) {
+            		memmove(buf, buf + (shift + 1) * sizeof(char), result_read);
+        	}
+	}
     }
 }

@@ -10,7 +10,7 @@ NAME=cat
 all: $(NAME)
 
 $(NAME): $(NAME).o libhelpers
-	$(CC) -o $@ -L../lib -lhelpers $<
+	$(CC) -o $@ $< -L../lib -lhelpers -Wl,-rpath,../lib
 
 $(NAME).o:
 	$(CC) -o $@ -c -I../lib $(NAME).c
@@ -22,5 +22,3 @@ clean:
 	rm -f *.o
 	rm -f $(NAME)
 
-$(NAME): $(NAME).c
-	gcc -Wall -std=c99 -I../lib -Wl,-rpath=../lib -L../lib $(NAME).c -o $(NAME) -lhelpers
