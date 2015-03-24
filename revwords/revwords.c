@@ -17,58 +17,58 @@ void back_to_front(int length, char* buf) {
 }
 
 int main(int argc, char* argv[]) {
-    ssize_t result_read = 0, result_write = 0;
-    int i = 0, j = 0;
-    char buf[BUF_SIZE];
-    int flag = 0;
-
-    while(1) {
-        ssize_t shift = result_read;
-        result_read = read_until(STDIN_FILENO, buf + shift * sizeof(char), sizeof(buf) - shift * sizeof(char), ' ');
-        if (result_read <= 0) {
-            back_to_front(shift, buf);
-            result_write = write_(STDOUT_FILENO, buf, shift * sizeof(char));
-
-            if (result_write == -1) {          
-        	char* exception = strerror(errno);
-    		write_(STDERR_FILENO, exception, strlen(exception) * sizeof(char));                         
-        	return 1;                               
-   	    }
-
-            if (result_read == -1) {          
-        	char* exception = strerror(errno);
-    		write_(STDERR_FILENO, exception, strlen(exception) * sizeof(char));                         
-        	return 1;                               
-   	    }
-            
-
-            if (result_read == 0) {
-                return 0;
-            }
-        }
-
-        result_read += shift;
-        shift = 0;
-        for (i = 0; i < result_read; i++) {
-            if(buf[i] == ' ') {
-                back_to_front(i - shift, buf + shift * sizeof(char));
-                result_write = write_(STDOUT_FILENO, buf + shift * sizeof(char), (i + 1 - shift) * sizeof(char));
-
-                if (result_write == -1) {          
-        	char* exception = strerror(errno);
-    		write_(STDERR_FILENO, exception, strlen(exception) * sizeof(char));                         
-        	return 1;                               
-   	        }
-                shift = i;
-		flag = 1;
-            }
-        }
-
-	if (flag == 1){
-		result_read -= (shift + 1) * sizeof(char);
-        	if(result_read > 0) {
-            		memmove(buf, buf + (shift + 1) * sizeof(char), result_read);
-        	}
+	ssize_t result_read = 0, result_write = 0, shift = 0;
+	int i = 0, j = 0;
+	char buf[BUF_SIZE];
+	
+	while (1) {
+		result_read = read_until(STDIN_FILENO, buf + shift, BUF_SIZE - shift, ' ');
+		if (result_read == -1) {
+		    char* exception = strerror(errno);
+    		write_(STDERR_FILENO, exception, strlen(exception)); 
+			return 1;
+		}
+		if (result_read == 0) {
+			if (shift == 0) {
+				return 0;
+			}
+			back_to_front(shift, buf);
+			result_write = write_(STDOUT_FILENO, buf, shift);
+			if (result_write == -1) {
+			    char* exception = strerror(errno);
+    		    write_(STDERR_FILENO, exception, strlen(exception)); 
+				return 1;
+			}
+			return 0;
+		}
+		i = shift;
+		shift += result_read;
+		j = 0;
+		for (; i < shift; i++) {
+			if (buf[i] == ' ') {
+				back_to_front(i - j, buf + j);
+				result_write = write_(STDOUT_FILENO, buf + j, i - j + 1);
+				if (result_write == -1) {
+				    char* exception = strerror(errno);
+    		        write_(STDERR_FILENO, exception, strlen(exception)); 
+					return 1;
+				}
+				j = i + 1;
+			}
+		}
+		if (shift- j == BUF_SIZE) {
+			back_to_front(shift, buf);
+			result_write = write_(STDOUT_FILENO, buf, shift);
+			if (result_write == -1) {
+			    char* exception = strerror(errno);
+    		    write_(STDERR_FILENO, exception, strlen(exception)); 
+				return 1;
+			}
+			j = shift;
+		}
+		shift -= j;
+		for (i = 0; i < shift; i++) {
+			buf[i] = buf[i + j];
+		}
 	}
-    }
 }
