@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <string.h>
 #include "helpers.h"
+#include <errno.h>
+#include <sys/wait.h>
 
 ssize_t read_(int fd, void* buf, size_t count) {
     int result = 0;
@@ -75,4 +77,32 @@ ssize_t write_(int fd, void* buf, size_t count) {
         buf += result;
         count -= result;
     }
+}
+
+int spawn(const char * file, char * const argv []) {
+   int pid = fork();
+    if (pid == -1) {
+        char* exception = strerror(errno);
+    	write_(STDERR_FILENO, exception, strlen(exception)); 
+        return -1;
+    }
+    if (pid == 0) {
+        int s = execvp(file, argv);
+        if (s == -1) {
+            char* exception = strerror(errno);
+    		write_(STDERR_FILENO, exception, strlen(exception)); 
+            return -1;
+        }
+        
+    } else {
+        int status;
+        wait(&status);
+        if(!WIFEXITED(status)) {
+            char* exception = strerror(errno);
+    		write_(STDERR_FILENO, exception, strlen(exception)); 
+            return -1;
+        }
+        return WEXITSTATUS(status);
+    }
+    return -1;
 }
