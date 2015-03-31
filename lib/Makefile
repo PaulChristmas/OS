@@ -4,17 +4,26 @@
 # Compiler
 CC=gcc
 
-# Flags
-CFLAGS=-Wall -fPIC
-LIBRARY=helpers
+# Libraries, bufio added.
+LIBH=helpers
+LIBB=bufio
 
-all: lib$(LIBRARY).so
-
-lib$(LIBRARY).so: $(LIBRARY).o
-	$(CC) -o $@ -shared $<
-
-$(LIBRARY).o:
-	$(CC) -o $@ -c $(CFLAGS) $(LIBRARY).c
+all: lib$(LIBB).so lib$(LIBH).so
 
 clean:
-	rm -f lib$(LIBRARY).so $(LIBRARY).o
+	rm -f *.o
+	rm -f *.so
+	rm -f *.out
+
+lib$(LIBH).so: $(LIBH).o
+	$(CC) -shared -o libhelpers.so helpers.o
+
+$(LIBH).o: $(LIBH).c 
+	$(CC) -c -std=c99 -fPIC -Wall -Werror helpers.c -o helpers.o 
+
+lib$(LIBB).so: $(LIBB).o
+	$(CC) -shared -o libbufio.so bufio.o
+
+$(LIBB).o: $(LIBB).c
+	$(CC) -c -std=c99 -fPIC -Wall -Werror bufio.c -o bufio.o 
+
