@@ -1,11 +1,12 @@
-# Created by PaulChristmas
-# 15.03.15
+HW = lib cat revwords filter bufcat simplesh
 
-DIRECTORIES=cat revwords filter bufcat
-
-all: 
-	@$(foreach ex, $(DIRECTORIES), $(MAKE) -C $(ex);)
-
+all:
+	@for dir in $(HW) ; do \
+		echo "Making $$dir"; \
+		$(MAKE) --no-print-directory -C $$dir; \
+	done
 clean:
-	@$(foreach ex, $(DIRECTORIES), $(MAKE) -C $(ex) clean;)
-
+	@for dir in $(HW) ; do \
+		echo "Cleaning $$dir"; \
+		$(MAKE) --no-print-directory clean -C $$dir; \
+	done

@@ -1,33 +1,30 @@
-#include <errno.h>
+#include "../lib/helpers.h"
+#include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
-#include <helpers.h>
+#include <stdio.h>
 
-void throw_error() {
-    char* error = strerror(errno);
-    write_(STDERR_FILENO, error, strlen(error) * sizeof(char));
-}
+const size_t BUF_SIZE = 1024;
 
-int main(int argc, char* argv[]) {
-    char buf[4096];
-    ssize_t result_read = 0;
-    ssize_t result_written = 0;
+int main() {
+	char buf[BUF_SIZE];
+	int read_res, write_res;
+	while ((read_res = read_(STDIN_FILENO, buf, BUF_SIZE)) > 0) {
+		if ((write_res = write_(STDOUT_FILENO, buf, read_res)) < 0) {
+			perror("Can't write to stdout");
+			goto ERROR;
+		}
+		
+		if (read_res < 0 || (size_t)read_res < BUF_SIZE)
+			break;
+	}
+	
+	if (read_res < 0) {
+		perror("Can't read from stdin");
+		goto ERROR;
+	}
+	
+	return 0;
 
-    while(1) {
-        result_read = read_(STDIN_FILENO, buf, sizeof(buf));
-        if(result_read == -1) {
-            throw_error();
-            return 1;
-        }
-
-        result_written = write_(STDOUT_FILENO, buf, result_read);
-        if(result_written == -1) {
-            throw_error();
-            return 1;
-        }
-        
-        if(result_read < sizeof(buf)) {
-            return 0;
-        }
-    }
+ERROR:
+	return EXIT_FAILURE;
 }

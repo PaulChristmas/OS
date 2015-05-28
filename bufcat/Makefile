@@ -1,22 +1,18 @@
-# Created by PaulChristmas
-# 31.03.15
+CC = gcc
 
-# Compiler
-CC=gcc
+CFLAGS = -L../lib -Wall -Wl,-rpath=../lib  -I../lib
 
-# Program name
-NAME=bufcat
+RM = rm -f
+TARGET = bufcat
 
-all: $(NAME)
+SRCS = bufcat.c 
+OBJS = $(SRCS:.c=.o) 
+LIBS = -lbufio
 
-$(NAME): $(NAME).o libbufio
-	$(CC) -o $@ $< -Wl,-rpath,../lib -L../lib -lbufio
-$(NAME).o:
-	$(CC) -o $@ -c -I../lib -ggdb $(NAME).c 
-
-libbufio:
-	$(MAKE) -C ../lib
-
+all: $(TARGET)
+ 
+$(TARGET): $(SRCS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+ 
 clean:
-	rm -f $(NAME) $(NAME).o
-	$(MAKE) -C ../lib clean
+	-$(RM) $(TARGET) $(OBJS)

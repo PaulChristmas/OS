@@ -1,22 +1,18 @@
-# Created by PaulChristmas
-# 15.03.15
+CC = gcc
 
-# Compiler
-CC=gcc
+CFLAGS = -L../lib -Wall -Wl,-rpath=../lib -g
 
-# Program name
-NAME=revwords
+RM = rm -f
+TARGET = revwords
 
-all: $(NAME)
+SRCS = revwords.c 
+OBJS = $(SRCS:.c=.o) 
+LIBS = -lhelpers
 
-$(NAME): $(NAME).o libhelpers
-	$(CC) -o $@ $< -Wl,-rpath,../lib -L../lib -lhelpers 
-$(NAME).o:
-	$(CC) -o $@ -c -I../lib -ggdb $(NAME).c 
-
-libhelpers:
-	$(MAKE) -C ../lib
-
+all: $(TARGET)
+ 
+$(TARGET): $(SRCS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+ 
 clean:
-	rm -f $(NAME) $(NAME).o
-	$(MAKE) -C ../lib clean
+	-$(RM) $(TARGET) $(OBJS)

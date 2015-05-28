@@ -1,24 +1,18 @@
-# Created by PaulChristmas
-# 10.03.15
+CC = gcc
 
-# Compiler
-CC=gcc
+CFLAGS = -L../lib -Wall -Wl,-rpath=../lib
 
-# Program name
-NAME=cat
+RM = rm -f
+TARGET = cat
 
-all: $(NAME)
+SRCS = cat.c 
+OBJS = $(SRCS:.c=.o) 
+LIBS = -lhelpers
 
-$(NAME): $(NAME).o libhelpers
-	$(CC) -o $@ $< -L../lib -lhelpers -Wl,-rpath,../lib
-
-$(NAME).o:
-	$(CC) -o $@ -c -I../lib $(NAME).c
-
-libhelpers:
-	$(MAKE) -C ../lib
-
+all: $(TARGET)
+ 
+$(TARGET): $(SRCS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+ 
 clean:
-	rm -f *.o
-	rm -f $(NAME)
-
+	-$(RM) $(TARGET) $(OBJS)

@@ -1,89 +1,106 @@
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <string.h>
-#include <stddef.h>
-#include <sys/wait.h>
-#include <sys/types.h>
 #include "bufio.h"
 
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/wait.h>
+#include <stdlib.h>
+
+struct buf_t {
+	size_t size;
+	size_t capacity;
+
+	char* buf;
+};
+
+typedef struct buf_t buf_t;
+
+buf_t *buf_new(size_t capacity) {
+	buf_t* p = malloc(sizeof(buf_t));
+	if (p == NULL) {
+		return p;
+	}
+	p->size = 0;
+	p->capacity = capacity;
+	p->buf = (char*) malloc(capacity);
+	if (p->buf == NULL) {
+		free(p);
+		return NULL;
+	}
+	return p;
+}
+
+void buf_free(buf_t * buf) {
 #ifdef DEBUG
+	if (buf == NULL) {
+		abort();
+	}
+#endif
+	free(buf->buf);
+	free(buf);
+}
 
-    #define BUF_EXISTS(condition) if (condition == NULL) {abort();}
-    
-#else
+size_t buf_capacity(buf_t *buf ) {
+#ifdef DEBUG
+	if (buf == NULL) {
+		abort();
+	}
+#endif
+	return buf->capacity;
+}
 
-    #define BUF_EXISTS(condition)
-    
+size_t buf_size(buf_t * buf) {
+#ifdef DEBUG
+	if (buf == NULL) {
+		abort();
+	}
+#endif
+	return buf->size;
+}
+
+ssize_t buf_fill(int fd, buf_t *buf, size_t required) {
+#ifdef DEBUG
+	if (buf == NULL) {
+		abort();
+	}
+#endif
+	size_t curr_size = 0;
+	ssize_t read_res;
+
+	size_t cap = buf->capacity;
+	char* curr = buf->buf;
+	while (curr_size < required && curr_size < cap && (read_res = read(fd, curr + curr_size, cap - curr_size)) > 0) {
+		curr_size += read_res;
+	}
+
+#ifdef DEBUG
+	if (read_res > 0 && required > cap) {
+		abort();
+	}
+#endif
+	buf->size = curr_size;
+	return curr_size;
+}
+
+ssize_t buf_flush(int fd, buf_t *buf, size_t required) {
+#ifdef DEBUG
+	if (buf == NULL) {
+		abort();
+	}
 #endif
 
-struct buf_t* buf_new(size_t capacity) {
-    struct buf_t * res = (struct buf_t *) malloc(sizeof(struct buf_t));
-    if (res == NULL) {
-        return NULL;
-    }
-    res->data = malloc(capacity);
-    if (res->data == NULL) {
-        free(res);
-        return NULL;
-    }
-    res->size = 0;
-    res->capacity = capacity;
-    return res;
-}
+	size_t curr_size = 0;
+	ssize_t write_res;
+	size_t cap = buf->size;
+	char* curr= buf->buf;
+	
+	while (curr_size < required && curr_size < cap && (write_res = write(fd, curr + curr_size, cap - curr_size)) > 0) {
+		curr_size += write_res;
+	}
 
-void buf_free(struct buf_t * buf) {
-    BUF_EXISTS(buf)
-    free(buf->data);
-    free(buf);
-}
-
-size_t buf_capacity(struct buf_t * buf) {
-    BUF_EXISTS(buf)
-    return buf->capacity;
-}
-
-size_t buf_size(struct buf_t * buf) {
-    BUF_EXISTS(buf)
-    return buf->size;
-}
-
-ssize_t buf_fill(fd_t fd, struct buf_t *buf, size_t required) {
-    BUF_EXISTS(buf)
-    ssize_t result_read = 0;
-    while (buf->size < buf->capacity && buf->size < required) {
-        result_read = read(fd, buf->data + buf->size, buf->capacity - buf->size);
-        if (result_read < 0) {
-            return -1;
-        } else if (result_read == 0) {
-            break;
-        } else {
-            buf->size += result_read;
-        }
-    }
-    return buf->size;
-}
-
-ssize_t buf_flush(fd_t fd, struct buf_t *buf, size_t required) {
-    BUF_EXISTS(buf)
-    ssize_t result_write = 0;
-    ssize_t result = 0;
-    while (0 < buf->size && result < required) {
-        result_write = write(fd, buf->data + result, buf->size);
-        if (result_write < 0) {
-              int temp = errno;
-            memcpy(buf->data, buf->data + result, buf->size);
-            errno = temp;
-            return -1;
-        } else {
-            result += result_write;
-            buf->size -= result_write;
-        }
-    }
-    if (buf->size > 0) {
-        memcpy(buf->data, buf->data + result, buf->size);
-    }
-    return result;
+	memmove(curr, curr + curr_size, cap - curr_size);
+	
+	buf->size -= curr_size;
+	return curr_size;
 }

@@ -1,29 +1,20 @@
-# Created by PaulChristmas
-# 10.03.15
+all: libbufio.so libhelpers.so
 
-# Compiler
-CC=gcc
+MAKE = @make --no-print-directory
 
-# Libraries, bufio added.
-LIBH=helpers
-LIBB=bufio
+BUFIO_SRC = bufio.c
+MAKE_BUFIO = $(MAKE) SRCS=$(BUFIO_SRC) NAME=bufio -f mklib.mk
 
-all: lib$(LIBB).so lib$(LIBH).so
+HELPERS_SRC = helpers.c
+MAKE_HELPERS = $(MAKE) SRCS=$(HELPERS_SRC) NAME=helpers -f mklib.mk
+
+libbufio.so:
+	$(MAKE_BUFIO)
+
+libhelpers.so:
+	$(MAKE_HELPERS)
 
 clean:
-	rm -f *.o
-	rm -f *.so
-	rm -f *.out
-
-lib$(LIBH).so: $(LIBH).o
-	$(CC) -shared -o libhelpers.so helpers.o
-
-$(LIBH).o: $(LIBH).c 
-	$(CC) -c -std=c99 -fPIC -Wall -Werror helpers.c -o helpers.o 
-
-lib$(LIBB).so: $(LIBB).o
-	$(CC) -shared -o libbufio.so bufio.o
-
-$(LIBB).o: $(LIBB).c
-	$(CC) -c -std=c99 -fPIC -Wall -Werror bufio.c -o bufio.o 
+	$(MAKE_BUFIO) clean
+	$(MAKE_HELPERS) clean
 
