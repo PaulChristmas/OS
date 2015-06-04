@@ -1,4 +1,4 @@
-HW = lib cat revwords filter bufcat simplesh
+HW = lib cat revwords filter bufcat simplesh filesender bipiper
 
 all:
 	@for dir in $(HW) ; do \

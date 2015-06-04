@@ -160,7 +160,7 @@ void handler_parent(int sig) {
 
 void handler_child(int sig) {
 	if (sig == SIGUSR1)
-		_exit(0);
+		kill(getpid(), SIGINT);
 }
 
 void handler_set(int isparent) {
@@ -174,12 +174,14 @@ void handler_set(int isparent) {
 		act.sa_handler = handler_child;
 
 	sigemptyset(&set);
-	sigaddset(&set, SIGINT);
+	if (isparent == 1)
+		sigaddset(&set, SIGINT);
 	sigaddset(&set, SIGUSR1);
 
 	act.sa_mask = set;
 
-	sigaction(SIGINT, &act, 0);
+	if (isparent == 1)
+		sigaction(SIGINT, &act, 0);
 	sigaction(SIGUSR1, &act, 0);
 }
 
@@ -192,11 +194,8 @@ int runpiped(execargs_t** programs, size_t n) {
 	pipefd[n][1] = STDOUT_FILENO;
 
 	size_t i;
-	for (i = 1; i < n; i++) {
-		if (pipe(pipefd[i]) < 0) return -1;
-	}
-
 	for (i = 0; i < n; i++) {
+		if (i != n - 1 && pipe(pipefd[i + 1]) < 0) return -1;
 		if ((children[i] = fork()) == 0) {
 			handler_set(0);
 
@@ -213,6 +212,15 @@ int runpiped(execargs_t** programs, size_t n) {
 			_exit(EXIT_FAILURE);
 		} else {
 			if (children[i] < 0) {
+				if (i != 0) {
+					close(pipefd[i][0]); 
+					close(pipefd[i][1]);
+				}
+				if (i != n - 1) {
+					close(pipefd[i + 1][0]);
+					close(pipefd[i + 1][1]);
+				}
+
 				size_t j;
 				for (j = 0; j < i; j++) 
 					kill(children[j], SIGUSR1);
@@ -223,7 +231,10 @@ int runpiped(execargs_t** programs, size_t n) {
 				return -1;
 		}
 	}
-	int status;
-	waitpid(children[n - 1], &status, 0);
+	
+	for (i = 0; i < n; i++) {
+		int status;
+		waitpid(children[i], &status, 0);
+	}
 	return 0;
 }
